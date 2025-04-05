@@ -11,25 +11,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS configuration for production
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://stock-xpert-three.vercel.app',
-  'https://openheimer9.github.io'
-];
-
-// Middleware
+// Middleware - use simpler CORS configuration that accepts all origins
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps, curl, etc.)
-    if (!origin) return callback(null, true);
-    if (allowedOrigins.indexOf(origin) === -1) {
-      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-      return callback(new Error(msg), false);
-    }
-    return callback(null, true);
-  },
-  credentials: true
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
@@ -132,6 +118,23 @@ app.get('/api/market/overview', async (req, res) => {
         console.error('Error fetching market overview:', error);
         res.status(500).json({ error: 'Failed to fetch market overview', message: error.message });
     }
+});
+
+// Add a healthcheck endpoint
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'ok', message: 'Server is running' });
+});
+
+// Add a root endpoint to confirm the API is working
+app.get('/', (req, res) => {
+  res.status(200).json({ 
+    message: 'StockXpert API is running', 
+    endpoints: [
+      '/api/market/overview',
+      '/api/stock/:symbol',
+      '/health'
+    ] 
+  });
 });
 
 // Error handling middleware
